@@ -36,7 +36,7 @@ jobs:
     - name: "Install EBook::EPUB from CPAN"
       run:  perl -MCPAN -Mlocal::lib -e 'CPAN::install(EBook::EPUB)'
     - name: Generate Modern Perl ePUB
-      run:  perl build/tools/build_epub.pl
+      run:  perl -Mlocal::lib build/tools/build_epub.pl
     - name: Save generated ePUB
       id: epub-upload
       uses: actions/upload-artifact@v4
