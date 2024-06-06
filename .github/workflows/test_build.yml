@@ -1,0 +1,51 @@
+name: Test Book Builds
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [ $default-branch ]
+  schedule:
+    - cron: '11 11 * * 1' # Every Monday at 11:11 [UTC]
+
+permissions:
+  contents: read
+
+jobs:
+  build_epub:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Update installed OS packages
+      run:  |
+        sudo apt-get update
+        sudo apt-get full-upgrade --assume-yes
+    - name: Install needed packages
+      run:  |
+        sudo apt install --assume-yes \
+          build-essential \
+          libarchive-zip-perl \
+          libdata-uuid-perl \
+          liblocal-lib-perl \
+          libpod-pseudopod-perl \
+          libmoose-perl \
+          libxml-writer-perl \
+          tidy
+    - name: Build individual chapters
+      run:  perl build/tools/build_chapters.pl
+    - name: "Install EBook::EPUB from CPAN"
+      run:  perl -MCPAN -Mlocal::lib -e 'CPAN::install(EBook::EPUB)'
+    - name: Generate Modern Perl ePUB
+      run:  perl -Mlocal::lib build/tools/build_epub.pl
+    - name: Save generated ePUB
+      id: epub-upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: Modern_Perl_Book.epub
+        path: build/epub/modern_perl.epub
+        compression-level: 0  # ePUB is already (zip) compressed
+        if-no-files-found: error
+    - name: Output artifact ID
+      run:  echo 'Artifact ID is ${{ steps.epub-upload.outputs.artifact-id }}'
+
+# vim: set ts=2 sw=2 et si:
